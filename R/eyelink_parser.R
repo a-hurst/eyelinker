@@ -215,7 +215,7 @@ process_events <- function(rows, blocks, colnames) {
     if (length(rows) == 1) rows <- c(rows, "")
     colnames <- c('type', colnames) # first col is event type, which we drop later
     coltypes <- get_coltypes(colnames)
-    df <- read_table2(rows, col_names = colnames, col_types = coltypes, na = ".")[, -1]
+    df <- read_table(rows, col_names = colnames, col_types = coltypes, na = ".")[, -1]
 
     # Move eye col to end & make factor, append block numbers to beginning of data frame
     if ("eye" %in% colnames) {
