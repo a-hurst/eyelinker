@@ -108,9 +108,9 @@ head(raw, 3)
 For a binocular recording, the raw sample data look a little different:
 
 ```{r}
-dat.bi <- read_asc(system.file("extdata/bino1000.asc.gz", package = "eyelinker"))
+dat_bi <- read_asc(system.file("extdata/bino1000.asc.gz", package = "eyelinker"))
 
-head(dat.bi$raw, 3)
+head(dat_bi$raw, 3)
 ```
 
 The eye variables are the same as before, but now they're being reported for both eyes with a suffix indicating left/right (i.e. xpl is the x position of the left eye).
@@ -121,23 +121,30 @@ The eye variables are the same as before, but now they're being reported for bot
 It's sometimes more convenient for plotting and analysis if the raw data are in "long" rather than "wide" format, as in the following example:
 
 ```{r}
-raw.long <- dplyr::select(raw, time, xp, yp, block) %>% tidyr::gather("coord", "pos", xp, yp)
-head(raw.long, 2)
-tail(raw.long, 2)
+raw_long <- raw %>%
+  dplyr::select(time, xp, yp, block) %>%
+  tidyr::gather("coord", "pos", xp, yp)
+
+head(raw_long, 2)
+tail(raw_long, 2)
 ```
 
 The eye position is now in a single column rather than two, and the column "coord" tells us if the value corresponds to the X or Y position. The benefits may not be obvious now, but it does make plotting the traces via ggplot2 a lot easier:
 
 
 ```{r fig.width=6.5, fig.height=4}
-raw.long <- mutate(raw.long, ts = (time - min(time)) / 1e3) # let's have time in sec.
-ggplot(raw.long, aes(ts, pos, col = coord)) + geom_point()
+raw_long <- raw_long %>%
+  mutate(tsec = (time - min(time)) / 1e3) # let's have time in sec.
+
+ggplot(raw_long, aes(tsec, pos, col = coord)) + geom_point()
 ```
 
 In this particular file there are four separate recording periods, corresponding to different "blocks" in the ASC file, which we can check using:
 
 ```{r fig.width=6.5, fig.height=4}
-ggplot(raw.long, aes(ts, pos, col = coord)) + geom_line() + facet_wrap(~block)
+ggplot(raw_long, aes(tsec, pos, col = coord)) +
+  geom_line() +
+  facet_wrap(~ block)
 ```
 
 ### Downsampling raw data
@@ -146,8 +153,8 @@ Performing operations on raw sample data can be quite slow for larger recordings
 
 ```{r}
 # Downsample raw data from 500 Hz to 100 Hz by only keeping every 5th row
-raw_100Hz <- dplyr::filter(raw, row_number() %% 5 == 0)
-head(raw_100Hz, 4)
+raw_100hz <- dplyr::filter(raw, row_number() %% 5 == 0)
+head(raw_100hz, 4)
 ```
 
 
@@ -165,12 +172,12 @@ head(sac, 3)
 
 To see if the saccades have been labelled correctly, we'll have to find the corresponding time samples in the raw data.
 
-The easiest way to achieve this is to view the detected saccades as a set of temporal intervals, with endpoints given by `stime` and `etime`. We'll use the `%In%` function to check if each time point in the raw data can be found in one of these intervals.
+The easiest way to achieve this is to view the detected saccades as a set of temporal intervals, with endpoints given by `stime` and `etime`. We'll use the `%within%` function to check if each time point in the raw data can be found in one of these intervals.
 
 ```{r}
-Sac <- cbind(sac$stime, sac$etime) # Define a set of intervals with these endpoints
+sac_intervals <- cbind(sac$stime, sac$etime)
 # See also: intervals package
-raw <- mutate(raw, saccade = time %In% Sac)
+raw <- mutate(raw, saccade = time %within% sac_intervals)
 head(raw, 3)
 mean(raw$saccade) * 100 # 6% of time samples correspond to saccades
 ```
@@ -180,9 +187,10 @@ Now each time point labelled with "saccade == TRUE" corresponds to a saccade det
 Let's plot traces again:
 
 ```{r fig.width=6.5, fig.height=4}
-mutate(raw.long, saccade = time %In% Sac) %>%
+raw_long %>%
+  mutate(saccade = time %within% sac_intervals) %>%
   filter(block == 1) %>%
-  ggplot(aes(ts, pos, group = coord, col = saccade)) + geom_line()
+  ggplot(aes(tsec, pos, group = coord, col = saccade)) + geom_line()
 ```
 
 
@@ -201,27 +209,30 @@ head(fix, 3)
 We can re-use essentially the same code to label fixations as we did to label saccades:
 
 ```{r fig.width=6.5, fig.height=4}
-Fix <- cbind(fix$stime, fix$etime) # Define a set of intervals
-mutate(raw.long, fixation = time %In% Fix) %>%
+fix_intervals <- cbind(fix$stime, fix$etime)
+raw_long %>%
+  mutate(fixation = time %within% fix_intervals) %>%
   filter(block == 1) %>%
-  ggplot(aes(ts, pos, group = coord, col = fixation)) + geom_line()
+  ggplot(aes(tsec, pos, group = coord, col = fixation)) + geom_line()
 ```
 
-We can get a fixation index using whichInterval:
+We can get a fixation index using `which_interval`:
 
 ```{r}
-head(mutate(raw, fix.index = whichInterval(time, Fix)), 4)
+head(mutate(raw, fix_index = which_interval(time, fix_intervals)), 4)
 ```
 
 Let's check that the average x and y positions are correct:
 
 ```{r}
-raw <- mutate(raw, fix.index = whichInterval(time, Fix))
-fix.check <- filter(raw, !is.na(fix.index)) %>%
-  group_by(fix.index) %>%
+raw <- mutate(raw, fix_index = which_interval(time, fix_intervals))
+fix_check <- raw %>%
+  filter(!is.na(fix_index)) %>%
+  group_by(fix_index) %>%
   summarise(axp = mean(xp), ayp = mean(yp)) %>%
-  ungroup
-head(fix.check, 3)
+  ungroup()
+
+head(fix_check, 3)
 ```
 
 We grouped all time samples according to fixation index, and computed mean x and y positions.
@@ -229,8 +240,8 @@ We grouped all time samples according to fixation index, and computed mean x and
 We verify that we recovered the right values:
 
 ```{r}
-all.equal(fix.check$axp, fix$axp)
-all.equal(fix.check$ayp, fix$ayp)
+all.equal(fix_check$axp, fix$axp)
+all.equal(fix_check$ayp, fix$ayp)
 ```
 
 
@@ -247,28 +258,30 @@ dat$blinks
 We'll re-use some the code above to label the blinks:
 
 ```{r}
-Blk <- cbind(dat$blinks$stime, dat$blinks$etime) # Define a set of intervals
+blink_intervals <- cbind(dat$blinks$stime, dat$blinks$etime)
 
-head(filter(dat$raw, time %In% Blk))
+head(filter(dat$raw, time %within% blink_intervals))
 ```
 
 Not surprisingly, during blinks, eye position data is unavailable. Unfortunately, it takes the eye tracker a bit of time to detect blinks, and the eye position data around blinks may be suspect. The EyeLink manual suggests that getting rid of samples that are within 100 ms of a blink should eliminate most problems. We'll use some functions from the **intervals** package to expand our blinks by 100 ms:
 
 ```{r}
-Suspect <- Intervals(Blk) %>% expand(100, "absolute")
-Suspect
+blink_regions <- Intervals(blink_intervals) %>% expand(100, "absolute")
+blink_regions
 ```
 
 Here's an example of a trace around a blink:
 
 ```{r fig.width=6.5, fig.height=4}
-raw.long <- dplyr::select(dat$raw, time, xp, yp, block) %>%
-  gather("coord", "pos", xp, yp)
-raw.long <- mutate(raw.long, ts = (time - min(time)) / 1e3) # let's have time in sec.
-ex <- mutate(raw.long, suspect = time %In% Suspect) %>%
+raw_long <- dat$raw %>%
+  dplyr::select(time, xp, yp, block) %>%
+  gather("coord", "pos", xp, yp) %>%
+  mutate(tsec = (time - min(time)) / 1e3) # let's have time in sec.
+
+ex <- mutate(raw_long, suspect = time %within% blink_regions) %>%
   filter(block == 2)
 
-ggplot(ex, aes(ts, pos, group = coord, col = suspect)) +
+ggplot(ex, aes(tsec, pos, group = coord, col = suspect)) +
   geom_line() +
   coord_cartesian(xlim = c(34, 40)) +
   labs(x = "Time (s)")
@@ -326,8 +339,8 @@ Similarly, raw gaze samples can be plotted out using `geom_path()`:
 ```{r fig.width=6, fig.height=4}
 raw_b1 <- subset(dat$raw, block == 1)
 
-ggplot() +
-  geom_path(data = raw_b1, aes(x = xp, y = yp), size = 0.5, color = "firebrick2") +
+ggplot(data = raw_b1, aes(x = xp, y = yp)) +
+  geom_path(size = 0.5, color = "firebrick2") +
   scale_x_continuous(expand = c(0, 0), limits = c(0, dat$info$screen.x)) +
   scale_y_reverse(expand = c(0, 0), limits = c(dat$info$screen.y, 0)) +
   labs(x = "x-axis (pixels)", y = "y-axis (pixels)") +
