@@ -25,6 +25,7 @@ Suggests:
     dplyr,
     ggplot2,
     tidyr,
+    purrr,
     covr
 VignetteBuilder: knitr
 Encoding: UTF-8

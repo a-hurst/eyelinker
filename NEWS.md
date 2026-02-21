@@ -1,6 +1,7 @@
 # eyelinker (development version)
 
  * Set tidyverse-style aliases to be preferred style in manual and vignettes
+ * Added new batch import vignette
  * Modernized syntax in 'Getting Started' vignette
  * Fixed compatibility with latest readr (#5, by Jenny Bryan)
 
