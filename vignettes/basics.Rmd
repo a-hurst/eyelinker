@@ -33,30 +33,30 @@ We'll use test data supplied by SR Research (found in the cili package for Pytho
 fpath <- system.file("extdata/mono500.asc.gz", package = "eyelinker")
 ```
 
-ASC files from longer recording sessions can be gigantic, so you can save space by compressing them using zip or gzip. To facilitate this, `read.asc()` supports reading compressed ASCs in .gz, .zip, .bz2, and .xz formats.
+ASC files from longer recording sessions can be gigantic, so you can save space by compressing them using zip or gzip. To facilitate this, `read_asc()` supports reading compressed ASCs in .gz, .zip, .bz2, and .xz formats.
 
-To read in all data from our example file, we call `read.asc()` on the filepath without any additional arguments:
+To read in all data from our example file, we call `read_asc()` on the filepath without any additional arguments:
 
 ```{r}
-dat <- read.asc(fpath)
+dat <- read_asc(fpath)
 str(dat, max.level = 1)
 ```
 
 ### Importing Events Only
 
-For larger ASC files, especially ones recorded at a high sample rate (1000+ Hz), importing sample data can be quite slow and eat up hundreds of megabytes of memory for a single file. If you're not interested in the raw sample data for your analysis, you can speed things up considerably by setting the `samples` argument to `FALSE` for `read.asc()`, meaning that it will skip parsing of raw samples for the given file:
+For larger ASC files, especially ones recorded at a high sample rate (1000+ Hz), importing sample data can be quite slow and eat up hundreds of megabytes of memory for a single file. If you're not interested in the raw sample data for your analysis, you can speed things up considerably by setting the `samples` argument to `FALSE` for `read_asc()`, meaning that it will skip parsing of raw samples for the given file:
 
 ```{r}
-dat_noraw <- read.asc(fpath, samples = FALSE)
+dat_noraw <- read_asc(fpath, samples = FALSE)
 str(dat_noraw, max.level = 1) # 'raw' data frame no longer present in the returned list
 ```
 
 ### Importing Out-Of-Block Data
 
-By default, `read.asc()` divides samples and events into numbered blocks based on the recording "START"/"END" lines in the ASC file. However, sometimes events that occur before or after recording blocks contain important information for a task (e.g. pre-block MSG events specifying the trial stimuli, post-block input events). To retain out-of-block samples and events during import, we set the `parse_all` option to `TRUE`:
+By default, `read_asc()` divides samples and events into numbered blocks based on the recording "START"/"END" lines in the ASC file. However, sometimes events that occur before or after recording blocks contain important information for a task (e.g. pre-block MSG events specifying the trial stimuli, post-block input events). To retain out-of-block samples and events during import, we set the `parse_all` option to `TRUE`:
 
 ```{r}
-dat_parseall <- read.asc(fpath, parse_all = TRUE)
+dat_parseall <- read_asc(fpath, parse_all = TRUE)
 str(dat_parseall, max.level = 1)
 ```
 
@@ -108,7 +108,7 @@ head(raw, 3)
 For a binocular recording, the raw sample data look a little different:
 
 ```{r}
-dat.bi <- read.asc(system.file("extdata/bino1000.asc.gz", package = "eyelinker"))
+dat.bi <- read_asc(system.file("extdata/bino1000.asc.gz", package = "eyelinker"))
 
 head(dat.bi$raw, 3)
 ```
@@ -240,7 +240,7 @@ Blink events are detected during recording by the tracker, and are stored in a f
 
 ```{r}
 fpath <- system.file("extdata/monoRemote500.asc.gz", package = "eyelinker")
-dat <- read.asc(fpath)
+dat <- read_asc(fpath)
 dat$blinks
 ```
 
@@ -285,7 +285,7 @@ Another type of data contained in ASC files are message events, which are stored
 head(dat$msg)
 ```
 
-The lines correspond to "MSG" lines in the imported ASC file. Since these messages can be anything, `read.asc()` leaves them unparsed: if you're interested in subsetting them or extracting data from them, you can parse them yourself using packages such as `stringr` or with the built-in `grep`/`grepl` functions.
+The lines correspond to "MSG" lines in the imported ASC file. Since these messages can be anything, `read_asc()` leaves them unparsed: if you're interested in subsetting them or extracting data from them, you can parse them yourself using packages such as `stringr` or with the built-in `grep`/`grepl` functions.
 
 To illustrate, we'll use `stringr`'s `str_detect()` function to select only rows containing the string "blank_screen":
 
