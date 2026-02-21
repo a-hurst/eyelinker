@@ -1,3 +1,9 @@
+# eyelinker (development version)
+
+ * Set tidyverse-style aliases to be preferred style in manual and vignettes
+ * Modernized syntax in 'Getting Started' vignette
+ * Fixed compatibility with latest readr (#5, by Jenny Bryan)
+
 # eyelinker 0.2.1
 
  * Fixed bug reading screen resolution from certain .asc files
