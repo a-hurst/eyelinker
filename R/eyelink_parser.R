@@ -28,7 +28,7 @@
 #' using the edf2asc utility before importing.
 #'
 #' @usage
-#' read.asc(fname, samples = TRUE, events = TRUE, parse_all = FALSE)
+#' read_asc(fname, samples = TRUE, events = TRUE, parse_all = FALSE)
 #'
 #' @param fname \code{character} vector indicating the name of the .asc file to import.
 #' @param samples \code{logical} indicating whether raw sample data should be imported. Defaults
@@ -43,10 +43,10 @@
 #' @examples
 #' # Example file from SR research that ships with the package
 #' fpath <- system.file("extdata/mono500.asc.gz", package = "eyelinker")
-#' dat <- read.asc(fpath)
-#' plot(dat$raw$time, dat$raw$xp, xlab = "Time (ms)", ylab = "Eye position along x-axis (pix)")
+#' dat <- read_asc(fpath)
+#' plot(dat$raw$time, dat$raw$xp, xlab = "Time (ms)", ylab = "Eye position along x-axis (px)")
 #'
-#' @export read.asc
+#' @export read_asc
 
 # TODO:
 #  - Check for multiple unique RECCFG lines, throw an error if so (can this even happen?)
@@ -55,7 +55,7 @@
 #  - Add function for parsing button samples? They're stored in a weird format
 
 
-read.asc <- function(fname, samples = TRUE, events = TRUE, parse_all = FALSE) {
+read_asc <- function(fname, samples = TRUE, events = TRUE, parse_all = FALSE) {
 
     inp <- read_lines(fname, progress = FALSE)
 
@@ -135,9 +135,9 @@ read.asc <- function(fname, samples = TRUE, events = TRUE, parse_all = FALSE) {
 }
 
 
-#' @rdname read.asc
+#' @rdname read_asc
 #' @export
-read_asc <- read.asc  # Alias for keeping with tidyverse-style naming conventions
+read.asc <- read_asc  # Alias for backwards compatibility
 
 
 process_raw <- function(raw, blocks, info) {
