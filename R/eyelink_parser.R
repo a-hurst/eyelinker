@@ -213,7 +213,7 @@ process_events <- function(rows, blocks, colnames) {
 
     # Parse data, dropping useless first columm
     if (length(rows) == 1) rows <- c(rows, "")
-    colnames <- c('type', colnames) # first col is event type, which we drop later
+    colnames <- c("type", colnames) # first col is event type, which we drop later
     coltypes <- get_coltypes(colnames)
     df <- read_table(rows, col_names = colnames, col_types = coltypes, na = ".")[, -1]
 
@@ -322,7 +322,7 @@ get_info <- function(nonsample, firstcol) {
     # Get tracker mount info
     elclcfg <- nonsample[str_detect(nonsample, fixed("ELCLCFG"))]
     if (length(elclcfg) > 0) {
-        info$mount <- get_mount(gsub('.* ELCLCFG\\s+(.*)', '\\1', elclcfg[1]))
+        info$mount <- get_mount(gsub(".* ELCLCFG\\s+(.*)", "\\1", elclcfg[1]))
     }
 
     # Get display size from file
@@ -350,15 +350,15 @@ get_info <- function(nonsample, firstcol) {
     config <- tail(c(events_config, samples_config), 1)
     if (length(config) > 0) {
         info$sample.rate <- ifelse(
-            grepl('RATE', config),
-            as.numeric(gsub('.*RATE\\s+([0-9]+\\.[0-9]+).*', '\\1', config)),
+            grepl("RATE", config),
+            as.numeric(gsub(".*RATE\\s+([0-9]+\\.[0-9]+).*", "\\1", config)),
             NA
         )
-        info$tracking <- grepl('\tTRACKING', config)
+        info$tracking <- grepl("\tTRACKING", config)
         info$cr <- grepl("\tCR", config)
         info$filter.level <- ifelse(
-            grepl('FILTER', config),
-            as.numeric(gsub('.*FILTER\\s+([0-9]).*', '\\1', config)),
+            grepl("FILTER", config),
+            as.numeric(gsub(".*FILTER\\s+([0-9]).*", "\\1", config)),
             NA
         )
         info$velocity <- grepl("\tVEL", config)
@@ -408,18 +408,18 @@ get_model <- function(header) {
     if (is.na(version_str)) {
         model <- "Unknown"
         ver_num <- "Unknown"
-    } else if (version_str != 'EYELINK II 1') {
+    } else if (version_str != "EYELINK II 1") {
         model <- "EyeLink I"
-        ver_num <- gsub('.* ([0-9]\\.[0-9]+) \\(.*', '\\1', version_str)
+        ver_num <- gsub(".* ([0-9]\\.[0-9]+) \\(.*", "\\1", version_str)
     } else {
-        ver_num <- gsub('.* v(.*) [[:alpha:]].*', '\\1', version_str2)
+        ver_num <- gsub(".* v(.*) [[:alpha:]].*", "\\1", version_str2)
         model <- ifelse(as.numeric(ver_num) < 2.4,
-            'EyeLink II',
+            "EyeLink II",
             ifelse(as.numeric(ver_num) < 5,
-                'EyeLink 1000',
+                "EyeLink 1000",
                 ifelse(as.numeric(ver_num) < 6,
-                    'EyeLink 1000 Plus',
-                    'EyeLink Portable Duo'
+                    "EyeLink 1000 Plus",
+                    "EyeLink Portable Duo"
                 )
             )
         )

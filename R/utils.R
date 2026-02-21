@@ -28,7 +28,7 @@ whichInterval <- function(x, Intv) {
     }
     # Check if we can simplify output
     if (all(sapply(wn$which_nearest, length) == 1)) {
-        wn$which_nearest <- do.call('c', wn$which_nearest)
+        wn$which_nearest <- do.call("c", wn$which_nearest)
     }
     wn$which_nearest
 }
