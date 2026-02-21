@@ -3,7 +3,6 @@
 \docType{package}
 \name{eyelinker}
 \alias{eyelinker}
-\alias{eyelinker-package}
 \title{Import ASC Files from EyeLink Eye Trackers}
 \description{
 Dealing with unprocessed ASC files from EyeLink eye trackers can be a pain.
