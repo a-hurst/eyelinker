@@ -3,7 +3,7 @@ Type: Package
 Title: Import ASC Files from EyeLink Eye Trackers
 Version: 0.2.1
 Author: Simon Barthelme <simon.barthelme@gipsa-lab.fr>
-Maintainer: Austin Hurst <ajhurst@uwaterloo.ca>
+Maintainer: Austin Hurst <austin.hurst@dal.ca>
 Description: Imports plain-text ASC data files from EyeLink eye trackers 
     into (relatively) tidy data frames for analysis and visualization.
 License: GPL-3 | file LICENCE

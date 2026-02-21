@@ -43,4 +43,4 @@ vignette("basics", package = "eyelinker")
 ## Credits
 
 * Author: Simon Barthelmé, CNRS, Gipsa-lab
-* Maintainer: Austin Hurst, University of Waterloo
+* Maintainer: Austin Hurst, Dalhousie University
