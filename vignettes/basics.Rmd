@@ -21,7 +21,7 @@ require(stringr)
 
 ## Converting EDFs to ASC
 
-EyeLink eye trackers record data into binary EDFs (EyeLink Data Files), which need to be converted to plain-text ASCII (ASC) files before they can be imported with eyelinker. To convert EDFs into ASC format, you can use the EDFConverter (point-and-click) or edf2asc (command line) utilities provided in the EyeLink Developer's Kit (downloadable on their [support forums](https://www.sr-support.com)).
+EyeLink eye trackers record data into binary EDFs (EyeLink Data Files), which need to be converted to plain-text ASCII (ASC) files before they can be imported with eyelinker. To convert EDFs into ASC format, you can use the EDFConverter (point-and-click) or edf2asc (command line) utilities provided in the EyeLink Developer's Kit (downloadable on their [support forums](https://www.sr-research.com/support/index.php)).
 
 
 ## Importing Data
