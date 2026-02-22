@@ -1,11 +1,10 @@
 ## Test environments
 
-* local OS X 10.11 install, R 3.6.0
-* macOS 10.15 (via GitHub Actions): release
-* Windows Server 2019 (via GitHub Actions): release
-* Ubuntu 18.04 LTS (via GitHub Actions): 3.3, 3.4, 3.5, oldrel, release, devel
-* r-hub: windows-x86_64-devel, ubuntu-gcc-release, fedora-clang-devel
-* win-builder (devel and release)
+* Local macOS 13.7.8 install, R 4.3.1
+* Local Fedora 43 install, R 4.5.2
+* macOS 15.7.4 (via GitHub Actions): release
+* Windows Server 2025 (via GitHub Actions): release
+* Ubuntu 24.04.3 LTS (via GitHub Actions): 4.1, 4.2, 4.3, 4.4, release, devel
 
 
 ## R CMD check results
