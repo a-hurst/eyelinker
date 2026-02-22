@@ -1,4 +1,4 @@
-# eyelinker (development version)
+# eyelinker 0.2.2
 
  * Set tidyverse-style aliases to be preferred style in manual and vignettes
  * Added new vignette on epoching data based on message events

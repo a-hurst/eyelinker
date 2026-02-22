@@ -1,7 +1,7 @@
 Package: eyelinker
 Type: Package
 Title: Import ASC Files from EyeLink Eye Trackers
-Version: 0.2.1.9000
+Version: 0.2.2
 Authors@R: c(
     person("Austin", "Hurst", email = "austin.hurst@dal.ca", role = "cre"),
     person("Simon", "Barthelmé", email = "simon.barthelme@gipsa-lab.fr", role = "aut"))

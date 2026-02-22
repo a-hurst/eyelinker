@@ -13,7 +13,7 @@ easy as possible.
 \details{
 For documentation of the structure of the returned data, see the "format" vignette:
 \itemize{
-\item vignette("format", package = "eyelinker")
+\item \code{vignette("format", package = "eyelinker")}
 }
 
 For worked examples illustrating the package in action, see the "basics",
