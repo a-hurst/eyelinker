@@ -2,7 +2,7 @@
 
 # Test for error when file contains no "START" messages
 test_that("test_err_on_no_data", {
-    expect_error(read.asc("hello\nthere"))
+    expect_error(read.asc(I("hello\nthere")))
 })
 
 

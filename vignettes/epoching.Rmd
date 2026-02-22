@@ -1,0 +1,264 @@
+---
+title: "Windowing Raw Sample Data"
+author: "Austin Hurst"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Windowing Raw Sample Data}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r results="hide", message=FALSE}
+# Import libraries required for the vignette
+library(eyelinker)
+library(dplyr)
+library(stringr)
+library(tidyr)
+library(ggplot2)
+```
+
+In most situations, the raw sample data from the eye tracker isn't very useful on its
+own: generally, you're interested in changes in eye position and/or pupil size
+*within certain periods of time* (e.g. change in pupil size following a stimulus onset).
+
+To split the raw signals into segments based on task events we typically need to extract
+and parse the message data, which contains time-stamped messages sent by the experiment
+program during the experiment runtime.
+
+This vignette provides a basic example of how to extract events from trial messages and
+align them with raw sample data.
+
+
+```{r results="hide", message=FALSE}
+# Read in example data
+fpath <- system.file("extdata/mono250.asc.gz", package = "eyelinker")
+asc <- read_asc(fpath)
+```
+
+## Extracting Trial Events From Messages
+
+Trial event messages are stored in the `msg` table of the imported data, which contains
+the text and timestamps of all messages sent to the tracker by the experiment program
+during each trial. Let's take a look at the  messages in our example data:
+
+```{r}
+asc$msg
+```
+
+As you can see, each trial contains a sequence of messages relating to events that
+happen during the trial (e.g. `Initial_display`). To get this into a more useful format,
+we can use pattern-matching functions from the `stringr` package to identify the onsets
+of trial phases based on the message text:
+
+```{r}
+trial_phases <- asc$msg %>%
+  mutate(
+    phase = case_when(
+      str_detect(text, "Initial_display") ~ "onset",
+      str_detect(text, "Target_display") ~ "target_on",
+      str_detect(text, "End_trial") ~ "trial_end"
+    )
+  ) %>%
+  subset(!is.na(phase)) %>%
+  select(-c(text)) %>%
+  mutate(
+    phase = as.factor(phase)
+  )
+```
+
+The `case_when` block here checks for partial matches in the message text corresponding
+to our events of interest and creates a new column with their phase names (defined on
+the right of the `~`). `case_when` will fill any messages that don't match one of the
+defined phases as NA, so we just filter out NA phases to get the timestamps for the
+events we actually care about. Let's look at the resulting data frame:
+
+```{r}
+trial_phases
+```
+
+Much easier to follow! Note that converting 'phase' to a factor isn't strictly
+necessary, but since factor columns take up quite a bit less memory that string columns
+in R and raw sample data can be millions of rows long it's generally a good idea.
+
+
+## Aligning Samples With Phases
+
+Now that we've got a table of trial events and their onsets, all we need to do is
+connect this info with the raw sample data.
+
+For data recorded at 1000 Hz this is straightforward, but for 500 Hz and 250 Hz
+recordings we need to do some extra work to make sure the event timestamps line up
+properly with the sample timestamps. This is because messages are always recorded at a
+resolution of 1000 Hz regardless of the sampling frequency, meaning you can end up with
+messages that happen *in between* samples instead of corresponding directly to them
+(e.g. samples at times 10000, 10004, 10008, etc. and message at time 10002).
+
+To fix this, let's write a little utility function to sync message timestamps to their
+nearest samples and use it on our table of events:
+
+```{r}
+sync_timestamps <- function(df, raw) {
+
+  # Get tracker sample rate and block onset timestamps from raw pupil data
+  ms_per_sample <- median(lead(raw$time)[1:10] - raw$time[1:10])
+  block_onsets <- raw %>%
+    group_by(block) %>%
+    summarize(onset = time[1])
+
+  # Adjust df so that its timestamps map onto the nearest sample timestamp
+  df <- df %>%
+    left_join(block_onsets, by = "block") %>%
+    group_by(block) %>%
+    mutate(
+      time = round((time - onset) / ms_per_sample) * ms_per_sample + onset
+    ) %>%
+    select(-c(onset))
+
+  df
+}
+
+trial_phases <- sync_timestamps(trial_phases, asc$raw)
+```
+
+If you're working with 1000 Hz recordings, you can skip the above step completely.
+
+Now that the event timestamps are properly aligned, let's connect the trial phases
+with the raw sample data!
+
+```{r}
+rawdat <- asc$raw %>%
+  left_join(trial_phases, by = c("block", "time")) %>%
+  group_by(block) %>%
+  fill(phase, .direction = "down")
+```
+
+`left_join` here joins the the trial phases we defined above to their corresponding
+blocks and timestamps in the raw gaze data. Then, for each block we use `fill` to
+fill in the gaps between trial events with the correct phase label.
+
+## Putting It Together
+
+Now that we've identified the event phases for each sample in the raw data, let's try
+using it to help visualize the changes in pupil size across trials.
+
+First, we'll drop all samples without a corresponding phase (all samples prior to the
+trial onset message in this case) and get the time relative to trial onset for each
+trial:
+
+```{r}
+rawdat <- rawdat %>%
+  subset(!is.na(phase)) %>%
+  group_by(block) %>%
+  mutate(
+    trialtime = time - time[1]
+  )
+```
+
+Before we plot, let's see what our data looks like now:
+```{r}
+rawdat
+```
+
+Now we can take the data and plot it out, color-coding by phase:
+
+```{r fig.width=6, fig.height=4}
+# Plot pupil size across the first 4 trials, color-coding by phase
+ggplot(subset(rawdat, block < 5), aes(x = trialtime, y = ps, color = phase)) +
+  geom_line() +
+  facet_wrap(~ block) +
+  labs(color = "Phase") +
+  ylab("Pupil Size") +
+  xlab("Trial Time (ms)")
+```
+
+
+## Extracting Windows Around Events
+
+The above approach is useful for visualizing eye data and for subsetting data based on
+event onsets, but what if you want to get a specific window of time *around* an event?
+
+Let's say you wanted to grab the region of data starting 100 ms before and ending 200 ms
+after the target onset for each trial. First, we'll define some helper functions for
+extracting epochs from event data and testing whether a given timestamp is within them:
+
+```{r}
+get_epochs <- function(msg, start, end = NULL, pad = c(0, 0)) {
+  end <- ifelse(is.null(end), start, end)
+  epochs <- msg %>%
+    group_by(block) %>%
+    # Select start/end event messages for each trial
+    filter(grepl(start, text) | grepl(end, text)) %>%
+    # If start != end and trial has no end event, discard trial
+    filter(n() >= ifelse(start == end, 1, 2)) %>%
+    # Get start and end timestamps for each trial, adding padding
+    summarize(
+      start = time[grepl(start, text)] - pad[1],
+      end = time[grepl(end, text)] + pad[2],
+    )
+  epochs
+}
+
+within_epoch <- function(time, epochs) {
+  time %within% cbind(epochs$start, epochs$end)
+}
+```
+
+### Defining Epochs
+
+Our `get_epochs` function takes a data frame of messages (`msg`) and returns a data
+frame of epochs (i.e. windows of time) based on strings matching start and
+(optionally) end events in those messages. It also lets us define a padding window
+(in milliseconds) to add to either end of the epoch:
+
+```{r}
+# Get the window of data between the trial start and end events for each trial
+trial_windows <- get_epochs(asc$msg, start = "Initial", end = "End")
+
+# Get the window of data 100 ms pre-target to 200 ms post-target for each trial
+target_windows <- get_epochs(asc$msg, start = "Target", pad = c(100, 200))
+```
+
+As illustrated above, `start` and `end` identifiers do not need to match the full text
+of their corresponding event messages, just enough of the text to be uniquely
+identifying.
+
+### Extracting Epochs
+
+Now that we've defined some epochs, we can use our `within_epoch` helper function to
+subset the sample data based on these windows of time:
+
+```{r}
+raw_trial <- asc$raw %>%
+  filter(within_epoch(time, trial_windows))
+
+raw_target <- asc$raw %>%
+  filter(within_epoch(time, target_windows))
+```
+
+Let's check that our epochs are working correctly by verifying the length of the target
+windows we extracted for each trial:
+
+```{r}
+raw_target %>%
+  group_by(block) %>%
+  summarize(duration = max(time) - min(time))
+```
+
+Note that due to asynchrony between message timestamps and sample timestamps at
+sample rates under 1000 Hz (as explained earlier), the window intervals may be off by
+a sample (4 ms in this case) unless additional corrections are made.
+
+### Epochs With Other Event Types
+
+Using the same helper functions, we can also subset eye events recorded by the tracker
+such as blinks, fixations, and saccades based on when they occur in the trial. For
+example, let's check the data for any saccades that started between target onset and
+trial end:
+
+```{r}
+post_target <- get_epochs(asc$msg, start = "Target", end = "End")
+
+asc$sacc %>%
+  filter(within_epoch(stime, post_target))
+```

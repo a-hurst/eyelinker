@@ -1,16 +1,17 @@
 Package: eyelinker
 Type: Package
 Title: Import ASC Files from EyeLink Eye Trackers
-Version: 0.2.1
-Author: Simon Barthelme <simon.barthelme@gipsa-lab.fr>
-Maintainer: Austin Hurst <austin.hurst@dal.ca>
+Version: 0.2.1.9000
+Authors@R: c(
+    person("Austin", "Hurst", email = "austin.hurst@dal.ca", role = "cre"),
+    person("Simon", "Barthelmé", email = "simon.barthelme@gipsa-lab.fr", role = "aut"))
 Description: Imports plain-text ASC data files from EyeLink eye trackers 
     into (relatively) tidy data frames for analysis and visualization.
 License: GPL-3 | file LICENCE
 URL: https://github.com/a-hurst/eyelinker
 BugReports: https://github.com/a-hurst/eyelinker/issues
 Depends: 
-    R (>= 3.2)
+    R (>= 4.0)
 Imports: 
     stringi,
     stringr,
@@ -24,7 +25,8 @@ Suggests:
     dplyr,
     ggplot2,
     tidyr,
+    purrr,
     covr
 VignetteBuilder: knitr
 Encoding: UTF-8
-RoxygenNote: 6.1.1
+RoxygenNote: 7.3.2

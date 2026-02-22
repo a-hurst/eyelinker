@@ -4,10 +4,10 @@ test_that("test_files_load", {
 
     # Read in all test files into a single named list
     files <- c(
-        'mono250.asc.gz', 'mono500.asc.gz', 'mono1000.asc.gz', 'mono2000.asc.gz',
-        'bino250.asc.gz', 'bino500.asc.gz', 'bino1000.asc.gz',
-        'monoRemote250.asc.gz', 'monoRemote500.asc.gz',
-        'binoRemote250.asc.gz', 'binoRemote500.asc.gz'
+        "mono250.asc.gz", "mono500.asc.gz", "mono1000.asc.gz", "mono2000.asc.gz",
+        "bino250.asc.gz", "bino500.asc.gz", "bino1000.asc.gz",
+        "monoRemote250.asc.gz", "monoRemote500.asc.gz",
+        "binoRemote250.asc.gz", "binoRemote500.asc.gz"
     )
     ascs <- lapply(files, function(f) {
         fpath <- system.file(paste0("extdata/", f), package = "eyelinker")

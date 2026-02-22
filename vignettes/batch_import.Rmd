@@ -1,0 +1,177 @@
+---
+title: "Batch Importing ASC Files"
+author: "Austin Hurst"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Batch Importing ASC Files}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r results="hide", message=FALSE}
+# Import libraries required for the vignette
+require(eyelinker)
+require(dplyr)
+require(tibble)
+require(purrr)
+```
+
+Generally when working with eye tracking data, you're working with data from more than
+one participant. As such, you generally want to be able to write your analysis scripts
+to be able to batch import and merge a whole list of `.asc` files! There are a few
+different ways to do this, depending on your specific use. Which method you use will
+depend on what kind of information you want to extract from the files as well as the
+file sizes of the recordings.
+
+First, you'll need to get a vector with paths to the files you want to import. For
+actual projects you can do this with R's built-in `list.files` function, but for the
+sake of this vignette we'll load some file paths from the package example data:
+
+```{r results="hide", message=FALSE}
+# Get full paths for all compressed .asc files in _Data/asc folder
+ascs <- list.files(
+  "./_Data/asc", pattern = "*.asc.gz",
+  full.names = TRUE, recursive = TRUE
+)
+
+# Get paths of example files for batch import
+ascs <- c(
+    system.file("extdata/mono250.asc.gz", package = "eyelinker"),
+    system.file("extdata/mono500.asc.gz", package = "eyelinker"),
+    system.file("extdata/mono1000.asc.gz", package = "eyelinker")
+)
+```
+
+## Single Event Type
+
+If you're only interested in importing a single event type (and that event type isn't
+raw samples), batch importing data can be done easily using `map_df` from the `purrr`
+package:
+
+```{r}
+# Batch import and merge saccade data for all files
+sacc_dat <- map_df(ascs, function(f) {
+  # Extract saccade data frame from file
+  df <- read_asc(f, samples = FALSE)$sacc
+  # Extract ID from file name and append to data as first column
+  id <- gsub(".asc.gz", "", basename(f))
+  df <- add_column(df, asc_id = id, .before = 1)
+  # Return data frame
+  df
+})
+
+# Batch import file metadata
+asc_info <- map_df(ascs, function(f) {
+  # Extract metadata data frame from file
+  df <- read_asc(f, samples = FALSE)$info
+  # Extract ID from file name and append to data as first column
+  id <- gsub(".asc.gz", "", basename(f))
+  df <- add_column(df, asc_id = id, .before = 1)
+  # Return data frame
+  df
+})
+```
+
+Now let's take a look at the saccade data we batch-imported. As you can see, the
+saccades from all three data files have been merged into a single data frame with the
+first column identifying the source file:
+
+```{r}
+sacc_dat
+```
+
+The batch-imported metadata is the same, with a single row for each participant. Reading
+in metadata this way makes it easy to identify any differences in eye tracker settings
+across participants (e.g. sample rate, eye tracked):
+
+```{r}
+asc_info %>%
+  select(c(asc_id, model, sample.rate, left, right, cr, screen.x, screen.y))
+```
+
+All the `map_df` function does is take a list of inputs (in this case, our list of
+`.asc` files), runs the same wrangling code on each input separately, and then
+stacks the output into a single data frame. This will work as long as the data frames
+returned in the wrangling stage all have identical column names and column types.
+Note that you need to extract and append the file ID or participant ID and append it
+to the data in this stage, otherwise you won't be able to tell which rows belong to
+which file!
+
+### Raw Samples
+
+If you're interested in batch-importing raw samples from multiple files you can use a
+similar approach but will need to keep RAM usage in mind. Remember that a single `.asc`
+file can contain millions of samples (especially at high sample rates), so anything you
+can do to cut down the amount of data from each file will help speed things up!
+
+A good approach for batch-importing raw sample data is to write a function that performs
+your desired preprocessing steps on the output from `read_asc` and then call that
+preprocessing function in `map_df`. For example, for a pupilometry study this function
+might window the pupil data for each trial to the region of interest using message
+timestamps (`asc$msg`), identify and interpolate blinks using the blink events
+identified by the tracker (`asc$blinks`), and then filter and downsample the pupil
+data before returning the data frame.
+
+
+## Multiple Event Types
+
+For some use cases, the above approach will work perfectly fine. However, if your
+project involves analyzing *multiple* eye data types it can be needlessly slow to
+parse each `.asc` file multiple times to extract all the data you need. As an
+alternative, you can use R's built-in `lapply` function to import all data into
+a list and then process the contents of that list separately:
+
+```{r}
+# Batch import full eye data (excluding raw samples) for all files
+eyedat <- lapply(ascs, function(f) {
+  # Since importing can be slow, print out progress message for each file
+  cat(paste0("Importing ", basename(f), "...\n"))
+  # Actually import the data
+  read_asc(f, samples = FALSE)
+})
+
+# Extract names of files (excluding suffix) and use them as participant IDs
+asc_ids <- gsub(".asc.gz", "", basename(ascs))
+names(eyedat) <- asc_ids
+
+# Parse fixation data from list
+fix_dat <- map_df(asc_ids, function(id) {
+  # Grab fixation data from each file in the list & append ID
+  eyedat[[id]]$fix %>%
+    add_column(asc_id = id, .before = 1)
+})
+
+# Parse blink data from list
+sacc_dat <- map_df(asc_ids, function(id) {
+  # Grab saccade data from each file in the list & append ID
+  eyedat[[id]]$sacc %>%
+    add_column(asc_id = id, .before = 1)
+})
+```
+
+## Caching Imported Data
+
+Because importing a full dataset of high-resolution eye tracking recordings can be
+quite slow, it's often useful to cache your eye data after importing so you don't
+have to wait for it all to import again next time you run the script. To do this,
+you can save your eye data into an `.Rds` file that can be quickly loaded back in:
+
+```{r}
+cache_path <- "./eyedata_cache.Rds"
+
+if (file.exists(cache_path)) {
+  # If cached eye data already exists, load that to save time
+  eyedat <- readRDS(cache_path)
+
+} else {
+  # Otherwise, import all raw .asc files and cache them
+  # [Insert import code that generates eyedat here]
+
+  # Save the imported data for next run
+  saveRDS(eyedat, file = cache_path)
+}
+```
+
+Note that if you make any changes to your import code, you will need to manually
+delete the cache file and re-run your import script for any changes to take effect!

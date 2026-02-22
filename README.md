@@ -3,8 +3,9 @@
 <!-- badges: start -->
 [![CRAN Version](http://www.r-pkg.org/badges/version/eyelinker)](https://CRAN.R-project.org/package=eyelinker)
 [![R-CMD-check](https://github.com/a-hurst/eyelinker/workflows/R-CMD-check/badge.svg)](https://github.com/a-hurst/eyelinker/actions)
-[![codecov](https://codecov.io/gh/a-hurst/eyelinker/branch/master/graph/badge.svg)](https://codecov.io/gh/a-hurst/eyelinker)
-[![Lifecycle: maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://www.tidyverse.org/lifecycle/#maturing)
+[![codecov](https://codecov.io/gh/a-hurst/eyelinker/branch/master/graph/badge.svg)](https://app.codecov.io/gh/a-hurst/eyelinker)
+[![Lifecycle:
+stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable)
 <!-- badges: end -->
 
 An R package for importing plain-text ASC data files from EyeLink eye trackers into (relatively) well-structured data frames. EDF files first must be converted to ASC using the `edf2asc` tool before they can be imported.
@@ -33,7 +34,7 @@ library(eyelinker)
 
 # Example file from SR research that ships with the package
 fpath <- system.file("extdata/mono500.asc.gz", package = "eyelinker")
-dat <- read.asc(fpath)
+dat <- read_asc(fpath)
 plot(dat$raw$time, dat$raw$xp, xlab = "Time (ms)", ylab = "Eye position along x-axis (px)")
 
 # For more info:

@@ -9,7 +9,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-After you've imported your ASC into R, you might find yourself trying to make sense of the resulting data. This vignettes walks you through the basic structure of the `read.asc()` output, and explains the different possible columns in each data frame along with any other relevant information.
+After you've imported your ASC into R, you might find yourself trying to make sense of the resulting data. This vignettes walks you through the basic structure of the `read_asc()` output, and explains the different possible columns in each data frame along with any other relevant information.
 
 
 ## The Basic Structure
@@ -19,11 +19,11 @@ require(eyelinker)
 
 # Load in an example file, look at structure
 ascfile <- system.file("extdata/mono2000.asc.gz", package = "eyelinker")
-asc <- read.asc(ascfile)
+asc <- read_asc(ascfile)
 str(asc, max.level = 1)
 ```
 
-The output format of `read.asc()` is a named list containing several data frames, each containing a different kind of data extracted from the ASC file. The names and contents of this list are as follows:
+The output format of `read_asc()` is a named list containing several data frames, each containing a different kind of data extracted from the ASC file. The names and contents of this list are as follows:
 
 Name | Data Frame Contents
 ----- | -----------
@@ -128,7 +128,7 @@ Column | Description
 
 ## Message Events
 
-The message events data frame contains both messages from the tracker itself (e.g. messages about drift corrects and recording settings) and messages sent to the tracker during recording by the experiment program (e.g. the block/trial number, markers of events within the trial, etc.). `read.asc()` makes no attempt to parse message content, leaving this task to the user.
+The message events data frame contains both messages from the tracker itself (e.g. messages about drift corrects and recording settings) and messages sent to the tracker during recording by the experiment program (e.g. the block/trial number, markers of events within the trial, etc.). `read_asc()` makes no attempt to parse message content, leaving this task to the user.
 
 Column | Description
 ------ | -----------

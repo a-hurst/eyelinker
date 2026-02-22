@@ -11,31 +11,31 @@
 #' @examples
 #' start <- c(0, 1, 2)
 #' end <- c(.5, 1.3, 3)
-#' intv <- cbind(start, end) # The first interval is 0-0.5, second is 1-1.3, etc.
-#' whichInterval(seq(0, 3, l = 10), intv)
+#' intv <- cbind(start, end) # The 1st interval is 0.0-0.5, 2nd is 1.0-1.3, etc.
+#' which_interval(seq(0, 3, l = 10), intv)
 #' @author Simon Barthelme
 #' @export
-whichInterval <- function(x, Intv) {
+which_interval <- function(x, Intv) {
 
     if (is.integer(x)) x <- as.double(x)
     if (is.matrix(Intv)) {
         Intv <- Intervals(Intv)
     }
     wn <- which_nearest(x, Intv)
-    notFound <- wn$distance_to_nearest != 0
-    if (any(notFound)) {
-        wn[notFound, ]$which_nearest <- NA
+    not_found <- wn$distance_to_nearest != 0
+    if (any(not_found)) {
+        wn[not_found, ]$which_nearest <- NA
     }
     # Check if we can simplify output
     if (all(sapply(wn$which_nearest, length) == 1)) {
-        wn$which_nearest <- do.call('c', wn$which_nearest)
+        wn$which_nearest <- do.call("c", wn$which_nearest)
     }
     wn$which_nearest
 }
 
-#' @rdname whichInterval
+#' @rdname which_interval
 #' @export
-which_interval <- whichInterval  # Alias for keeping with tidyverse-style naming conventions
+whichInterval <- which_interval  # Alias for backwards compatibility
 
 #' Find if value belongs to a set of intervals
 #'
@@ -51,10 +51,10 @@ which_interval <- whichInterval  # Alias for keeping with tidyverse-style naming
 #' @examples
 #' start <- c(0, 1, 2)
 #' end <- c(.5, 1.3, 3)
-#' intv <- cbind(start, end) # The first interval is 0-0.5, second is 1-1.3, etc.
-#' c(0, .6, 1.5, 3) %In% intv
+#' intv <- cbind(start, end) # The 1st interval is 0.0-0.5, 2nd is 1.0-1.3, etc.
+#' c(0, 0.6, 1.5, 3) %within% intv
 #' @export
-`%In%` <- function(x, Intv) {
+`%within%` <- function(x, Intv) {
     if (is.integer(x)) x <- as.double(x)
     if (is.matrix(Intv)) {
         Intv <- Intervals(Intv)
@@ -62,6 +62,6 @@ which_interval <- whichInterval  # Alias for keeping with tidyverse-style naming
     distance_to_nearest(x, Intv) == 0
 }
 
-#' @rdname grapes-In-grapes
+#' @rdname grapes-within-grapes
 #' @export
-`%within%` <- `%In%`  # Alias for keeping with tidyverse-style naming conventions
+`%In%` <- `%within%`  # Alias for backwards compatibility
