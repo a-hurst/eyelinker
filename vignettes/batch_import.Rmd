@@ -81,9 +81,9 @@ first column identifying the source file:
 sacc_dat
 ```
 
-The batch-imported metadata is the same, with a single row for each participant. Note
-that reading in metadata this way makes it easy to identify any differences in eye
-tracker settings across participants (e.g. sample rate, eye tracked):
+The batch-imported metadata is the same, with a single row for each participant. Reading
+in metadata this way makes it easy to identify any differences in eye tracker settings
+across participants (e.g. sample rate, eye tracked):
 
 ```{r}
 asc_info %>%
