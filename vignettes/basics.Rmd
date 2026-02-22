@@ -9,7 +9,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r results="hide", message=FALSE}
+```{r results="hide", message=FALSE, warning=FALSE}
 # Import libraries required for the vignette
 require(eyelinker)
 require(dplyr)
@@ -39,7 +39,7 @@ To read in all data from our example file, we call `read_asc()` on the filepath 
 
 ```{r}
 dat <- read_asc(fpath)
-str(dat, max.level = 1)
+str(dat, max.level = 1, give.attr = FALSE)
 ```
 
 ### Importing Events Only
@@ -57,7 +57,7 @@ By default, `read_asc()` divides samples and events into numbered blocks based o
 
 ```{r}
 dat_parseall <- read_asc(fpath, parse_all = TRUE)
-str(dat_parseall, max.level = 1)
+str(dat_parseall, max.level = 1, give.attr = FALSE)
 ```
 
 As you can see, the `msg` and `input` data frames for this file contain more events than before. For events and samples not within any block, the value of the `block` column will be the index of the previous block plus 0.5 (e.g. 1.5 for a message event between blocks 1 and 2). You can use `block %% 1 != 0` to select all out-of-block rows in a data frame, which can be useful if you want to make out-of-block events belong to the block before or after (or exclude them from further analysis):
