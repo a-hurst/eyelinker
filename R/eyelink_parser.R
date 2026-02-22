@@ -182,7 +182,7 @@ process_raw <- function(raw, blocks, info) {
     raw_df <- read_tsv(
         I(raw), col_names = colnames, col_types = coltypes, na = ".", progress = FALSE
     )
-    if (info$tracking & !info$cr) {
+    if (info$tracking && !info$cr) {
         raw_df$cr.info <- NULL  # Drop CR column when not actually used
     }
 
