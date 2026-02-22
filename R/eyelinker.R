@@ -5,15 +5,15 @@
 #' easy as possible.
 #'
 #' For documentation of the structure of the returned data, see the "format" vignette:
+#' * `vignette("format", package = "eyelinker")`
 #'
-#' \code{vignette("format", package = "eyelinker")}
-#'
-#' For worked examples illustrating the package in action, see the "basics" vignette:
-#'
-#' \code{vignette("basics", package = "eyelinker")}
-#' @docType package
-#' @name eyelinker
-NULL
+#' For worked examples illustrating the package in action, see the "basics",
+#' "epoching", and "batch_import" vignettes:
+#' * `vignette("basics", package = "eyelinker")`
+#' * `vignette("epoching", package = "eyelinker")`
+#' * `vignette("batch_import", package = "eyelinker")`
+#' @md
+"_PACKAGE"
 
 #' @importFrom stats median
 #' @importFrom utils tail
